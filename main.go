@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -75,10 +76,12 @@ func main() {
 			}
 		})
 		api.GET("/get_trades", func(c *gin.Context) {
-			iter := client.Collection("trades").Documents(ctx)
+			iter := client.Collection("trades").OrderBy("timestamp", firestore.Desc)
+			iter.Limit(100)
+			docum := iter.Documents(ctx)
 			var trades []Trade
 			for {
-				doc, err := iter.Next()
+				doc, err := docum.Next()
 				if err == iterator.Done {
 					break
 				}
