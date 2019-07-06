@@ -1,8 +1,9 @@
 $( document ).ready(function() {
     $( "#buy" ).on( "click", function() {
+        var seconds = Math.floor(new Date() / 1000);
         var data = {
             "trade_type": "buy",
-            "timestamp": $.now().toString(),
+            "timestamp": seconds.toString(),
             "amount" : $("#amountXTRI").val(),
             "price" : (parseFloat($("#priceXTRI").val()) / 100000000).toFixed(8).toString()
         };
@@ -12,9 +13,10 @@ $( document ).ready(function() {
         
     })
     $( "#sell" ).on( "click", function() {
+        var seconds = Math.floor(new Date() / 1000);
         var data = {
             "trade_type": "sell",
-            "timestamp": $.now().toString(),
+            "timestamp": seconds.toString(),
             "amount" : $("#amountXTRI").val(),
             "price" : (parseFloat($("#priceXTRI").val()) / 100000000).toFixed(8).toString()
         };

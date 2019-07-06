@@ -16,7 +16,7 @@ import (
 //Trade
 type Trade struct {
 	TradeType string `json:"TradeType"`
-	Timestamp string `json:"Timestamp"`
+	TimeStamp string `json:"TimeStamp"`
 	Amount    string `json:"Amount"`
 	Price     string `json:"Price"`
 }
@@ -52,7 +52,7 @@ func main() {
 			newTade := Trade{c.PostForm("trade_type"), c.PostForm("timestamp"), c.PostForm("amount"), c.PostForm("price")}
 			_, _, err = client.Collection("trades").Add(ctx, map[string]interface{}{
 				"trade_type": newTade.TradeType,
-				"timestamp":  newTade.Timestamp,
+				"timestamp":  newTade.TimeStamp,
 				"amount":     newTade.Amount,
 				"price":      newTade.Price,
 			})
@@ -65,7 +65,7 @@ func main() {
 			newTade := Trade{c.PostForm("trade_type"), c.PostForm("timestamp"), c.PostForm("amount"), c.PostForm("price")}
 			_, _, err = client.Collection("trades").Add(ctx, map[string]interface{}{
 				"trade_type": newTade.TradeType,
-				"timestamp":  newTade.Timestamp,
+				"timestamp":  newTade.TimeStamp,
 				"amount":     newTade.Amount,
 				"price":      newTade.Price,
 			})
