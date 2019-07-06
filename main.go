@@ -15,7 +15,7 @@ import (
 
 //Trade
 type Trade struct {
-	TradeType string `json:"TradeTyoe"`
+	TradeType string `json:"TradeType"`
 	Timestamp string `json:"Timestamp"`
 	Amount    string `json:"Amount"`
 	Price     string `json:"Price"`
