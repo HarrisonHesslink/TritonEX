@@ -1,0 +1,27 @@
+body {
+    background-color: #171B29;
+    color: white;
+}
+
+#priceXTRI{
+    max-width: 15%;
+}
+#amountXTRI{
+    max-width: 15%;
+}
+
+hr{
+    background-color: white;
+}
+.sell{
+background-color: #D1474A;
+font-weight: 500;
+text-align: center;
+}
+
+
+.buy{
+    background-color: #26a69a;
+    font-weight: 500;
+    text-align: center;
+    }

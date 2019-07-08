@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	firebase "firebase.google.com/go"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
@@ -22,7 +24,73 @@ type Trade struct {
 	Price     string `json:"Price"`
 }
 
+//Order
+type Order struct {
+	TradeType string `json: "TradeType"`
+	TimeStamp string `json: "TimeStamp"`
+	Amount    string `json: "Amount"`
+	Price     string `json: "Price"`
+	Filled    string `json: Filled`
+}
+
+//Message
+type rawMessageData1 struct {
+	message string
+}
+
+//Message
+type rawMessageData struct {
+	message string
+	data    json.RawMessage
+}
+
+// Json of new Order for buy or sell
+type orderJson struct {
+	Tradetype string `json: "trade_type"`
+	Timestamp string `json: "timestamp"`
+	Amount    string `json: "amount"`
+	Price     string `json: "price"`
+}
+
+var wsupgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+func wshandler(w http.ResponseWriter, r *http.Request) {
+	conn, err := wsupgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println("Failed to set websocket upgrade: %+v", err)
+		return
+	}
+
+	for {
+		t, msg, err := conn.ReadMessage()
+		if err != nil {
+			break
+		}
+		log.Printf("recv: %s", msg)
+		conn.WriteMessage(t, msg)
+		raw := rawMessageData1{}
+		errJSON := conn.ReadJSON(&raw)
+		if errJSON != nil {
+			fmt.Println("Error reading json.", err)
+		}
+		if raw.message != "" {
+			fmt.Printf("Got message: %#v\n", raw)
+			var messages []rawMessageData
+			r := json.Unmarshal([]byte(raw.message), &messages)
+			if r != nil {
+				log.Fatalln("error:", err)
+			}
+			fmt.Println()
+		}
+
+	}
+}
+
 func main() {
+
 	// Use a service account
 	ctx := context.Background()
 	sa := option.WithCredentialsFile("credentials.json")
@@ -40,6 +108,10 @@ func main() {
 	router := gin.Default()
 	router.Use(static.Serve("/assets", static.LocalFile("./assets", true)))
 	router.LoadHTMLGlob("views/*")
+
+	router.GET("/ws", func(c *gin.Context) {
+		wshandler(c.Writer, c.Request)
+	})
 
 	api := router.Group("/api")
 	{
@@ -93,13 +165,37 @@ func main() {
 				time := docsnap["timestamp"].(string)
 				p := docsnap["price"].(string)
 				a := docsnap["amount"].(string)
-				fmt.Println(p)
-				fmt.Println(a)
 				newTrade := Trade{trtype, time, a, p}
 				trades = append(trades, newTrade)
 			}
 
 			c.IndentedJSON(http.StatusOK, trades)
+
+		})
+		api.GET("/get_orders", func(c *gin.Context) {
+			iter := client.Collection("orders").OrderBy("timestamp", firestore.Desc)
+			iter.Limit(100)
+			docum := iter.Documents(ctx)
+			var orders []Order
+			for {
+				doc, err := docum.Next()
+				if err == iterator.Done {
+					break
+				}
+				if err != nil {
+					log.Fatalf("Failed to iterate: %v", err)
+				}
+				docsnap := doc.Data()
+				trtype := docsnap["trade_type"].(string)
+				time := docsnap["timestamp"].(string)
+				p := docsnap["price"].(string)
+				a := docsnap["amount"].(string)
+				f := docsnap["filled"].(string)
+				newOrder := Order{trtype, time, a, p, f}
+				orders = append(orders, newOrder)
+			}
+
+			c.IndentedJSON(http.StatusOK, orders)
 
 		})
 	}
@@ -116,4 +212,5 @@ func main() {
 	})
 
 	router.Run(":80")
+
 }
